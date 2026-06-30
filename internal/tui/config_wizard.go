@@ -6,7 +6,7 @@ import (
 
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
-	appconfig "github.com/sugar_petauro/git-toxagotchi/internal/infrastructure/config"
+	appconfig "github.com/gTauro8/git-toxagotchi/internal/infrastructure/config"
 )
 
 // ConfigWizard is a step-by-step Bubble Tea setup wizard.

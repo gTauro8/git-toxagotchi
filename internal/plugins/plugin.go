@@ -3,7 +3,7 @@ package plugins
 import (
 	"context"
 
-	"github.com/sugar_petauro/git-toxagotchi/internal/domain"
+	"github.com/gTauro8/git-toxagotchi/internal/domain"
 )
 
 // Plugin is the interface all Git-Toxagotchi plugins must implement.

@@ -3,8 +3,8 @@ package tui
 import (
 	"strings"
 
-	"github.com/sugar_petauro/git-toxagotchi/assets"
-	"github.com/sugar_petauro/git-toxagotchi/internal/domain"
+	"github.com/gTauro8/git-toxagotchi/assets"
+	"github.com/gTauro8/git-toxagotchi/internal/domain"
 )
 
 func LoadASCII(stage domain.Stage) string {

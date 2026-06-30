@@ -9,11 +9,11 @@ import (
 	"strings"
 
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/gTauro8/git-toxagotchi/internal/application"
+	appconfig "github.com/gTauro8/git-toxagotchi/internal/infrastructure/config"
+	"github.com/gTauro8/git-toxagotchi/internal/infrastructure/storage"
+	"github.com/gTauro8/git-toxagotchi/internal/tui"
 	"github.com/spf13/cobra"
-	"github.com/sugar_petauro/git-toxagotchi/internal/application"
-	appconfig "github.com/sugar_petauro/git-toxagotchi/internal/infrastructure/config"
-	"github.com/sugar_petauro/git-toxagotchi/internal/infrastructure/storage"
-	"github.com/sugar_petauro/git-toxagotchi/internal/tui"
 )
 
 func main() {

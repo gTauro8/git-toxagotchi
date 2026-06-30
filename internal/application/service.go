@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/sugar_petauro/git-toxagotchi/internal/domain"
-	"github.com/sugar_petauro/git-toxagotchi/internal/infrastructure/storage"
+	"github.com/gTauro8/git-toxagotchi/internal/domain"
+	"github.com/gTauro8/git-toxagotchi/internal/infrastructure/storage"
 )
 
 type Service struct {
