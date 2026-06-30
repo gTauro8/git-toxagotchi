@@ -1,4 +1,4 @@
-module github.com/sugar_petauro/git-toxagotchi
+module github.com/gTauro8/git-toxagotchi
 
 go 1.24.0
 

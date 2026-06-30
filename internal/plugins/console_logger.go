@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/sugar_petauro/git-toxagotchi/internal/domain"
+	"github.com/gTauro8/git-toxagotchi/internal/domain"
 )
 
 // ConsoleLoggerPlugin logs all pet events to stderr. Useful for debugging.

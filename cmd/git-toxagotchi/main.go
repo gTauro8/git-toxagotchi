@@ -9,11 +9,11 @@ import (
 	"strings"
 
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/gTauro8/git-toxagotchi/internal/application"
+	appconfig "github.com/gTauro8/git-toxagotchi/internal/infrastructure/config"
+	"github.com/gTauro8/git-toxagotchi/internal/infrastructure/storage"
+	"github.com/gTauro8/git-toxagotchi/internal/tui"
 	"github.com/spf13/cobra"
-	"github.com/sugar_petauro/git-toxagotchi/internal/application"
-	appconfig "github.com/sugar_petauro/git-toxagotchi/internal/infrastructure/config"
-	"github.com/sugar_petauro/git-toxagotchi/internal/infrastructure/storage"
-	"github.com/sugar_petauro/git-toxagotchi/internal/tui"
 )
 
 func main() {
@@ -66,22 +66,39 @@ func openStore() (*storage.SQLiteStore, *appconfig.Config, error) {
 
 func initCmd() *cobra.Command {
 	var name string
+	var skipWizard bool
 	cmd := &cobra.Command{
 		Use:   "init",
-		Short: "Create a new pet",
+		Short: "Create a new pet (runs setup wizard on first launch)",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			store, cfg, err := openStore()
+			// Run the config wizard if no config file exists yet and not skipped.
+			cfg, err := appconfig.Load()
+			if err != nil {
+				return err
+			}
+			_, statErr := os.Stat(appconfig.Path())
+			if os.IsNotExist(statErr) && !skipWizard {
+				result, err := tui.RunWizard(cfg)
+				if err != nil {
+					return fmt.Errorf("config wizard: %w", err)
+				}
+				if result != nil {
+					cfg = result
+				}
+			}
+
+			store, _, err := openStore()
 			if err != nil {
 				return err
 			}
 			defer store.Close()
 
-			if name == "" {
-				name = cfg.PetName
+			if name != "" {
+				cfg.PetName = name
 			}
 
 			svc := application.NewService(store)
-			pet, err := svc.GetOrCreatePet(name)
+			pet, err := svc.GetOrCreatePet(cfg.PetName)
 			if err != nil {
 				return err
 			}
@@ -89,7 +106,8 @@ func initCmd() *cobra.Command {
 			return nil
 		},
 	}
-	cmd.Flags().StringVarP(&name, "name", "n", "", "Name for your pet")
+	cmd.Flags().StringVarP(&name, "name", "n", "", "Name for your pet (overrides wizard)")
+	cmd.Flags().BoolVar(&skipWizard, "no-wizard", false, "Skip the setup wizard")
 	return cmd
 }
 
@@ -393,18 +411,103 @@ func generateBadgeSVG(stage, mood string) string {
 }
 
 func configCmd() *cobra.Command {
-	return &cobra.Command{
+	cmd := &cobra.Command{
 		Use:   "config",
+		Short: "Manage configuration",
+		// Default: show config when called with no subcommand.
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return showConfig()
+		},
+	}
+	cmd.AddCommand(configShowCmd())
+	cmd.AddCommand(configSetCmd())
+	cmd.AddCommand(configEditCmd())
+	return cmd
+}
+
+func configShowCmd() *cobra.Command {
+	return &cobra.Command{
+		Use:   "show",
 		Short: "Show current configuration",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return showConfig()
+		},
+	}
+}
+
+func showConfig() error {
+	cfg, err := appconfig.Load()
+	if err != nil {
+		return err
+	}
+	fmt.Printf("pet_name:      %s\n", cfg.PetName)
+	fmt.Printf("theme:         %s\n", cfg.Theme)
+	fmt.Printf("llm_enabled:   %v\n", cfg.LLMEnabled)
+	fmt.Printf("hook_blocking: %v\n", cfg.HookBlocking)
+	fmt.Printf("db_path:       %s\n", cfg.DBPath)
+	fmt.Printf("\nConfig file: %s\n", appconfig.Path())
+	return nil
+}
+
+func configSetCmd() *cobra.Command {
+	return &cobra.Command{
+		Use:   "set <key> <value>",
+		Short: "Set a config value",
+		Long: `Set a single config value. Available keys:
+  pet_name      — name of your pet
+  theme         — color theme (default, dracula, nord, solarized)
+  llm_enabled   — enable LLM feedback (true/false)
+  hook_blocking — block dangerous commits in pre-commit hook (true/false)`,
+		Args: cobra.ExactArgs(2),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			key, value := args[0], args[1]
+			cfg, err := appconfig.Load()
+			if err != nil {
+				return err
+			}
+			switch key {
+			case "pet_name":
+				cfg.PetName = value
+			case "theme":
+				valid := map[string]bool{"default": true, "dracula": true, "nord": true, "solarized": true}
+				if !valid[value] {
+					return fmt.Errorf("unknown theme %q — choose from: default, dracula, nord, solarized", value)
+				}
+				cfg.Theme = value
+			case "llm_enabled":
+				cfg.LLMEnabled = value == "true" || value == "1" || value == "yes"
+			case "hook_blocking":
+				cfg.HookBlocking = value == "true" || value == "1" || value == "yes"
+			default:
+				return fmt.Errorf("unknown key %q", key)
+			}
+			if err := appconfig.Save(cfg); err != nil {
+				return err
+			}
+			fmt.Printf("✅ %s = %s\n", key, value)
+			return nil
+		},
+	}
+}
+
+func configEditCmd() *cobra.Command {
+	return &cobra.Command{
+		Use:   "edit",
+		Short: "Re-open the interactive setup wizard",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cfg, err := appconfig.Load()
 			if err != nil {
 				return err
 			}
-			fmt.Printf("pet_name:     %s\n", cfg.PetName)
-			fmt.Printf("theme:        %s\n", cfg.Theme)
-			fmt.Printf("llm_enabled:  %v\n", cfg.LLMEnabled)
-			fmt.Printf("db_path:      %s\n", cfg.DBPath)
+			result, err := tui.RunWizard(cfg)
+			if err != nil {
+				return err
+			}
+			if result == nil {
+				fmt.Println("Cancelled — config unchanged.")
+				return nil
+			}
+			fmt.Printf("✅ Config saved to %s\n", appconfig.Path())
 			return nil
 		},
 	}

@@ -6,8 +6,8 @@ import (
 
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
-	"github.com/sugar_petauro/git-toxagotchi/internal/application"
-	"github.com/sugar_petauro/git-toxagotchi/internal/domain"
+	"github.com/gTauro8/git-toxagotchi/internal/application"
+	"github.com/gTauro8/git-toxagotchi/internal/domain"
 )
 
 type tickMsg time.Time

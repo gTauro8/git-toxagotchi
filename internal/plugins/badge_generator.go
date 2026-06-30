@@ -6,7 +6,7 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/sugar_petauro/git-toxagotchi/internal/domain"
+	"github.com/gTauro8/git-toxagotchi/internal/domain"
 )
 
 // BadgeGeneratorPlugin generates a local SVG badge when the pet evolves.
