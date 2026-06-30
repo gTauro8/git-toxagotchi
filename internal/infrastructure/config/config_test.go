@@ -22,7 +22,7 @@ func TestDefaultConfig(t *testing.T) {
 }
 
 func TestConfigPath(t *testing.T) {
-	path := ConfigPath()
+	path := Path()
 	if path == "" {
 		t.Error("config path should not be empty")
 	}

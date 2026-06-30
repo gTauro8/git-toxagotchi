@@ -68,8 +68,10 @@ func (s *SQLiteStore) migrate() error {
 
 	// Seed achievements
 	for _, ach := range domain.AllAchievements() {
-		s.db.Exec(`INSERT OR IGNORE INTO achievements (id, name, description, unlocked, icon) VALUES (?, ?, ?, 0, ?)`,
-			string(ach.ID), ach.Name, ach.Description, ach.Icon)
+		if _, err := s.db.Exec(`INSERT OR IGNORE INTO achievements (id, name, description, unlocked, icon) VALUES (?, ?, ?, 0, ?)`,
+			string(ach.ID), ach.Name, ach.Description, ach.Icon); err != nil {
+			return fmt.Errorf("seed achievement %s: %w", ach.ID, err)
+		}
 	}
 
 	return nil
@@ -120,7 +122,7 @@ func (s *SQLiteStore) GetRecentEvents(limit int) ([]*domain.Event, error) {
 			continue
 		}
 		e.Timestamp, _ = time.Parse(time.RFC3339, ts)
-		json.Unmarshal([]byte(meta), &e.Metadata)
+		_ = json.Unmarshal([]byte(meta), &e.Metadata)
 		events = append(events, e)
 	}
 	return events, nil

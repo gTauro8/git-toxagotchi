@@ -28,7 +28,9 @@ func (p *BadgeGeneratorPlugin) OnEvolution(_ context.Context, _, newStage domain
 		home, _ := os.UserHomeDir()
 		p.OutputDir = filepath.Join(home, ".local", "share", "git-toxagotchi")
 	}
-	os.MkdirAll(p.OutputDir, 0755)
+	if err := os.MkdirAll(p.OutputDir, 0755); err != nil {
+		return fmt.Errorf("badge-generator: mkdir: %w", err)
+	}
 	path := filepath.Join(p.OutputDir, "badge.svg")
 	svg := generateBadgeSVG(string(newStage))
 	if err := os.WriteFile(path, []byte(svg), 0644); err != nil {

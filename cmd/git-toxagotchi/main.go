@@ -52,7 +52,9 @@ func openStore() (*storage.SQLiteStore, *appconfig.Config, error) {
 
 	dbDir := cfg.DBPath[:strings.LastIndex(cfg.DBPath, "/")]
 	if dbDir != "" {
-		os.MkdirAll(dbDir, 0755)
+		if err := os.MkdirAll(dbDir, 0755); err != nil {
+			return nil, nil, fmt.Errorf("create db dir: %w", err)
+		}
 	}
 
 	store, err := storage.NewSQLiteStore(cfg.DBPath)
@@ -356,7 +358,9 @@ func shareCmd() *cobra.Command {
 
 			home, _ := os.UserHomeDir()
 			outDir := filepath.Join(home, ".local", "share", "git-toxagotchi")
-			os.MkdirAll(outDir, 0755)
+			if err := os.MkdirAll(outDir, 0755); err != nil {
+				return fmt.Errorf("create output dir: %w", err)
+			}
 
 			badgePath := filepath.Join(outDir, "badge.svg")
 			svg := generateBadgeSVG(string(pet.Stage), string(pet.Mood))

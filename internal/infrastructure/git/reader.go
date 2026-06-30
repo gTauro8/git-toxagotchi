@@ -60,7 +60,7 @@ func (r *Reader) GetRepoStats() (*RepoStats, error) {
 	cmd := exec.Command("git", "rev-list", "--count", "HEAD")
 	out, _ := cmd.Output()
 	count := 0
-	fmt.Sscanf(strings.TrimSpace(string(out)), "%d", &count)
+	_, _ = fmt.Sscanf(strings.TrimSpace(string(out)), "%d", &count)
 
 	statusCmd := exec.Command("git", "status", "--porcelain")
 	statusOut, _ := statusCmd.Output()

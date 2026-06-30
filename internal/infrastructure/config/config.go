@@ -26,14 +26,14 @@ func DefaultConfig() *Config {
 	}
 }
 
-func ConfigPath() string {
+func Path() string {
 	home, _ := os.UserHomeDir()
 	return filepath.Join(home, ".config", "git-toxagotchi", "config.yaml")
 }
 
 func Load() (*Config, error) {
 	cfg := DefaultConfig()
-	path := ConfigPath()
+	path := Path()
 
 	data, err := os.ReadFile(path)
 	if err != nil {
@@ -50,7 +50,7 @@ func Load() (*Config, error) {
 }
 
 func Save(cfg *Config) error {
-	path := ConfigPath()
+	path := Path()
 	if err := os.MkdirAll(filepath.Dir(path), 0755); err != nil {
 		return err
 	}
