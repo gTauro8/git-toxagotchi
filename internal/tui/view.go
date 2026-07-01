@@ -21,7 +21,7 @@ func RenderView(m Model) string {
 	b.WriteString("\n\n")
 
 	// Pet ASCII art
-	art := RenderPet(m.pet.Stage, m.blink)
+	art := RenderPet(m.pet.Stage, m.pet.Mood, m.blink)
 	b.WriteString(art)
 	b.WriteString("\n")
 

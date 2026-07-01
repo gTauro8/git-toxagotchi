@@ -10,11 +10,33 @@ import (
 
 var (
 	secretPatterns = []*regexp.Regexp{
-		regexp.MustCompile(`(?i)(aws_access_key_id|aws_secret_access_key)\s*=\s*\S+`),
-		regexp.MustCompile(`(?i)(password|passwd|pwd)\s*=\s*\S+`),
-		regexp.MustCompile(`(?i)(token|secret|api_key|apikey)\s*=\s*\S+`),
-		regexp.MustCompile(`-----BEGIN (RSA|EC|DSA|OPENSSH) PRIVATE KEY-----`),
+		// AWS
 		regexp.MustCompile(`AKIA[0-9A-Z]{16}`),
+		regexp.MustCompile(`(?i)(aws_access_key_id|aws_secret_access_key)\s*[:=]\s*\S+`),
+		// Private keys
+		regexp.MustCompile(`-----BEGIN (RSA|EC|DSA|OPENSSH|PGP) PRIVATE KEY`),
+		// GitHub tokens
+		regexp.MustCompile(`gh[pousr]_[A-Za-z0-9]{36}`),
+		regexp.MustCompile(`github_pat_[A-Za-z0-9_]{82}`),
+		// Stripe
+		regexp.MustCompile(`sk_live_[A-Za-z0-9]{24}`),
+		regexp.MustCompile(`rk_live_[A-Za-z0-9]{24}`),
+		// GCP / Google
+		regexp.MustCompile(`AIza[0-9A-Za-z\-_]{35}`),
+		regexp.MustCompile(`(?i)"type"\s*:\s*"service_account"`),
+		// Slack
+		regexp.MustCompile(`xox[baprs]-[0-9A-Za-z\-]{10,}`),
+		// Twilio (must be exactly 34 hex chars after SK)
+		regexp.MustCompile(`\bSK[0-9a-fA-F]{32}\b`),
+		// SendGrid (two base64url segments of exact length)
+		regexp.MustCompile(`\bSG\.[A-Za-z0-9\-_]{22}\.[A-Za-z0-9\-_]{43}\b`),
+		// npm
+		regexp.MustCompile(`npm_[A-Za-z0-9]{36}`),
+		// Generic high-confidence patterns
+		regexp.MustCompile(`(?i)(password|passwd|pwd)\s*[:=]\s*["']?[^\s"']{8,}`),
+		regexp.MustCompile(`(?i)(secret|api_key|apikey|api_secret)\s*[:=]\s*["']?[^\s"']{8,}`),
+		// .env file staged directly (matches diff header line, not source code)
+		regexp.MustCompile(`(?m)^\+\+\+ b/[^\n]*\.env\b`),
 	}
 
 	conventionalCommitPattern = regexp.MustCompile(`^(feat|fix|docs|style|refactor|test|chore|perf|ci|build|revert)(\(.+\))?!?:\s.+`)

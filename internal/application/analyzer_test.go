@@ -27,19 +27,33 @@ func TestScoreMessage(t *testing.T) {
 func TestDetectSecrets(t *testing.T) {
 	a := NewAnalyzer()
 
-	withSecret := `+AWS_ACCESS_KEY_ID=AKIAIOSFODNN7EXAMPLE`
-	if !a.detectSecrets(withSecret) {
-		t.Error("should detect AWS key")
+	cases := []struct {
+		name string
+		diff string
+		want bool
+	}{
+		{"AWS key ID", `+AKIAIOSFODNN7EXAMPLE`, true},
+		{"AWS env var", `+AWS_ACCESS_KEY_ID=AKIAIOSFODNN7EXAMPLE`, true},
+		{"RSA private key", `+-----BEGIN RSA PRIVATE KEY-----`, true},
+		{"OPENSSH private key", `+-----BEGIN OPENSSH PRIVATE KEY-----`, true},
+		{"GitHub token ghp_", "+token = ghp" + "_abcdefghijklmnopqrstuvwxyz123456789012", true},
+		{"Stripe live key", "+STRIPE_KEY=sk" + "_live_abcdefghijklmnopqrstuvwx", true},
+		{"Google API key", "+key = AIza" + "SyD-abcdefghijklmnopqrstuvwxyz1234567", true},
+		{"Slack token", "+token = xoxb" + "-123456789012-123456789012-abcdef", true},
+		{"SendGrid key", "+SG." + "aaaaaaaaaaaaaaaaaaaaaa.bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb", true},
+		{"npm token", "+authToken=npm" + "_abcdefghijklmnopqrstuvwxyz123456789012", true},
+		{"generic password", `+password = "mysupersecret123"`, true},
+		{".env file staged", "+++ b/config/.env", true},
+		{"clean Go code", `+fmt.Println("hello world")`, false},
+		{"clean comment", `+// this is a normal comment`, false},
+		{"test token in test file", `+testToken := "test_value"`, false},
 	}
 
-	clean := `+fmt.Println("hello world")`
-	if a.detectSecrets(clean) {
-		t.Error("should not detect secret in clean diff")
-	}
-
-	privateKey := `+-----BEGIN RSA PRIVATE KEY-----`
-	if !a.detectSecrets(privateKey) {
-		t.Error("should detect private key")
+	for _, tc := range cases {
+		got := a.detectSecrets(tc.diff)
+		if got != tc.want {
+			t.Errorf("[%s] detectSecrets(%q) = %v, want %v", tc.name, tc.diff, got, tc.want)
+		}
 	}
 }
 

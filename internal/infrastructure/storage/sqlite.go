@@ -153,6 +153,23 @@ func (s *SQLiteStore) GetAchievements() ([]domain.Achievement, error) {
 	return achs, nil
 }
 
+func (s *SQLiteStore) DeleteAllData() error {
+	tables := []string{"pets", "events", "achievements"}
+	for _, t := range tables {
+		if _, err := s.db.Exec("DELETE FROM " + t); err != nil {
+			return fmt.Errorf("delete %s: %w", t, err)
+		}
+	}
+	// Re-seed achievements so they're ready for the new pet.
+	for _, ach := range domain.AllAchievements() {
+		if _, err := s.db.Exec(`INSERT OR IGNORE INTO achievements (id, name, description, unlocked, icon) VALUES (?, ?, ?, 0, ?)`,
+			string(ach.ID), ach.Name, ach.Description, ach.Icon); err != nil {
+			return fmt.Errorf("seed achievement %s: %w", ach.ID, err)
+		}
+	}
+	return nil
+}
+
 func (s *SQLiteStore) Close() error {
 	return s.db.Close()
 }
