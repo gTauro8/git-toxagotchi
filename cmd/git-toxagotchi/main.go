@@ -422,7 +422,7 @@ func resetCmd() *cobra.Command {
 			if !force {
 				fmt.Print("⚠️  This will delete your pet and all progress. Are you sure? [y/N] ")
 				var answer string
-				fmt.Scanln(&answer)
+				_, _ = fmt.Scanln(&answer)
 				if strings.ToLower(strings.TrimSpace(answer)) != "y" {
 					fmt.Println("Cancelled.")
 					return nil
