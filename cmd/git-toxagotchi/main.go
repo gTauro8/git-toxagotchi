@@ -40,6 +40,7 @@ func rootCmd() *cobra.Command {
 	root.AddCommand(hookCmd())
 	root.AddCommand(shareCmd())
 	root.AddCommand(configCmd())
+	root.AddCommand(resetCmd())
 
 	return root
 }
@@ -258,9 +259,10 @@ func achievementsCmd() *cobra.Command {
 }
 
 func analyzeCmd() *cobra.Command {
-	return &cobra.Command{
+	var hookMode bool
+	c := &cobra.Command{
 		Use:   "analyze",
-		Short: "Analyze the last commit and update pet",
+		Short: "Analyze staged changes and update pet",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			store, _, err := openStore()
 			if err != nil {
@@ -283,9 +285,22 @@ func analyzeCmd() *cobra.Command {
 				return err
 			}
 			fmt.Println(response)
+			// In hook mode, exit with code 1 if secrets were detected.
+			if hookMode {
+				a := application.NewAnalyzer()
+				analysis := a.AnalyzeCommit(msg, diff)
+				if analysis.SecretsDetected {
+					fmt.Fprintln(os.Stderr, "\n🚨 Commit blocked: possible secret detected in staged files.")
+					fmt.Fprintln(os.Stderr, "   Review the diff with `git diff --cached` and remove sensitive data.")
+					fmt.Fprintln(os.Stderr, "   Use --no-verify to bypass (at your own risk).")
+					os.Exit(1)
+				}
+			}
 			return nil
 		},
 	}
+	c.Flags().BoolVar(&hookMode, "hook", false, "Run in pre-commit hook mode (blocks on secrets)")
+	return c
 }
 
 func gitOutput(args ...string) string {
@@ -396,6 +411,37 @@ func shareCmd() *cobra.Command {
 			return nil
 		},
 	}
+}
+
+func resetCmd() *cobra.Command {
+	var force bool
+	cmd := &cobra.Command{
+		Use:   "reset",
+		Short: "Delete your pet and start over",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			if !force {
+				fmt.Print("⚠️  This will delete your pet and all progress. Are you sure? [y/N] ")
+				var answer string
+				fmt.Scanln(&answer)
+				if strings.ToLower(strings.TrimSpace(answer)) != "y" {
+					fmt.Println("Cancelled.")
+					return nil
+				}
+			}
+			store, _, err := openStore()
+			if err != nil {
+				return err
+			}
+			defer store.Close()
+			if err := store.DeleteAllData(); err != nil {
+				return err
+			}
+			fmt.Println("🪦 Pet deleted. Run `git-toxagotchi init` to start over.")
+			return nil
+		},
+	}
+	cmd.Flags().BoolVarP(&force, "force", "f", false, "Skip confirmation prompt")
+	return cmd
 }
 
 func generateBadgeSVG(stage, mood string) string {
